@@ -1,0 +1,6 @@
+{
+  "method": "Fractional MNQ. Rebalance sets notional back to 3x equity. Daily PnL = contracts * 2 * B-ADJ point delta. Leverage measured with unadjusted NQ close.",
+  "cash_weight_main": 0.7,
+  "sample_start": "2011-01-04",
+  "sample_end": "2026-06-18"
+}

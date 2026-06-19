@@ -1,0 +1,15 @@
+{
+  "sample_start": "2011-01-03",
+  "sample_end": "2026-06-18",
+  "method": "MNQ return = 3 * (B-ADJ close delta / unadjusted prior close) + cash_weight * BIL adjusted-close return.",
+  "cash_weights": {
+    "MNQ 3x, no cash": 0.0,
+    "MNQ 3x + 55% BIL": 0.55,
+    "MNQ 3x + 70% BIL": 0.7
+  },
+  "outputs": {
+    "report": "C:\\Users\\zhx09\\Desktop\\tqqq_mnq_analysis\\report_badj_final.html",
+    "summary": "C:\\Users\\zhx09\\Desktop\\tqqq_mnq_analysis\\data\\final\\tqqq_mnq_badj_summary.csv",
+    "nav": "C:\\Users\\zhx09\\Desktop\\tqqq_mnq_analysis\\data\\final\\tqqq_mnq_badj_nav_paths.csv"
+  }
+}
