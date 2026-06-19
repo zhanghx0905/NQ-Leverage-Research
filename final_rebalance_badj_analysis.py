@@ -11,8 +11,12 @@ import pandas as pd
 
 
 ROOT = Path(__file__).resolve().parent
-DATA = ROOT / "data" / "final"
+DATA = ROOT / "data"
+INTERIM = DATA / "interim"
+OUTPUT = DATA / "output"
 CHARTS = ROOT / "charts_final"
+INTERIM.mkdir(parents=True, exist_ok=True)
+OUTPUT.mkdir(parents=True, exist_ok=True)
 CHARTS.mkdir(parents=True, exist_ok=True)
 
 TARGET_LEVERAGE = 3.0
@@ -278,7 +282,7 @@ def build_report(summary: pd.DataFrame, nav: pd.DataFrame):
 
 
 def main():
-    model = pd.read_csv(DATA / "tqqq_mnq_badj_daily_model.csv", parse_dates=["date"]).set_index("date").sort_index()
+    model = pd.read_csv(INTERIM / "tqqq_mnq_badj_daily_model.csv", parse_dates=["date"]).set_index("date").sort_index()
     model = model.dropna(subset=["badj_close_delta", "unadj_close", "BIL"])
     model["BIL_ret"] = model["BIL"]
 
@@ -298,11 +302,11 @@ def main():
     summary = pd.DataFrame([calc_stats(rule, paths[rule]) for rule in ["Daily", "Weekly", "Monthly"]]).set_index("rule")
     no_cash_summary = pd.DataFrame([calc_stats(rule, no_cash_paths[rule]) for rule in ["Daily", "Weekly", "Monthly"]]).set_index("rule")
 
-    nav.to_csv(DATA / "tqqq_mnq_rebalance_nav_paths.csv")
-    no_cash_nav.to_csv(DATA / "tqqq_mnq_rebalance_nav_paths_no_cash.csv")
-    summary.to_csv(DATA / "tqqq_mnq_rebalance_summary_70pct_bil.csv")
-    no_cash_summary.to_csv(DATA / "tqqq_mnq_rebalance_summary_no_cash.csv")
-    pd.concat({rule: path for rule, path in paths.items()}, names=["rule", "date"]).to_csv(DATA / "tqqq_mnq_rebalance_detail_70pct_bil.csv")
+    nav.to_csv(OUTPUT / "tqqq_mnq_rebalance_nav_paths.csv")
+    no_cash_nav.to_csv(OUTPUT / "tqqq_mnq_rebalance_nav_paths_no_cash.csv")
+    summary.to_csv(OUTPUT / "tqqq_mnq_rebalance_summary_70pct_bil.csv")
+    no_cash_summary.to_csv(OUTPUT / "tqqq_mnq_rebalance_summary_no_cash.csv")
+    pd.concat({rule: path for rule, path in paths.items()}, names=["rule", "date"]).to_csv(OUTPUT / "tqqq_mnq_rebalance_detail_70pct_bil.csv")
 
     plot_paths(nav)
     plot_leverage(paths)
@@ -314,7 +318,7 @@ def main():
         "sample_start": str(model.index[0].date()),
         "sample_end": str(model.index[-1].date()),
     }
-    (DATA / "tqqq_mnq_rebalance_source_notes.json").write_text(json.dumps(notes, indent=2), encoding="utf-8")
+    (OUTPUT / "tqqq_mnq_rebalance_source_notes.json").write_text(json.dumps(notes, indent=2), encoding="utf-8")
 
     print(summary[["final_multiple", "cagr", "ann_vol", "max_drawdown", "pre_lev_min", "pre_lev_max", "rebalances_per_year"]].round(4).to_string())
     print("Report:", ROOT / "report_rebalance_badj_final.html")

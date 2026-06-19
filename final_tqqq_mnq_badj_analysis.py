@@ -1,7 +1,6 @@
 from pathlib import Path
 import json
 import math
-import shutil
 
 import matplotlib
 matplotlib.use("Agg")
@@ -14,9 +13,12 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "data"
-FINAL = DATA / "final"
+INPUT = DATA / "input"
+INTERIM = DATA / "interim"
+OUTPUT = DATA / "output"
 CHARTS = ROOT / "charts_final"
-FINAL.mkdir(parents=True, exist_ok=True)
+INTERIM.mkdir(parents=True, exist_ok=True)
+OUTPUT.mkdir(parents=True, exist_ok=True)
 CHARTS.mkdir(parents=True, exist_ok=True)
 
 TARGET_LEVERAGE = 3.0
@@ -41,29 +43,10 @@ TOKENS = {
 }
 
 
-def first_existing(*paths: Path) -> Path:
-    for path in paths:
-        if path.exists():
-            return path
-    raise FileNotFoundError("None of these paths exist: " + ", ".join(str(p) for p in paths))
-
-
 def load_inputs() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    integrated = pd.read_csv(
-        first_existing(
-            DATA / "nq1_integrated_badj_nonbadj_closed_only.csv",
-            FINAL / "nq1_integrated_badj_nonbadj_closed_only.csv",
-        ),
-        parse_dates=["time"],
-    ).rename(columns={"time": "date"})
-    tqqq = pd.read_csv(
-        first_existing(DATA / "raw_TQQQ.csv", DATA / "raw" / "raw_TQQQ.csv", FINAL / "raw_TQQQ.csv"),
-        parse_dates=["date"],
-    )
-    bil = pd.read_csv(
-        first_existing(DATA / "raw_BIL.csv", DATA / "raw" / "raw_BIL.csv", FINAL / "raw_BIL.csv"),
-        parse_dates=["date"],
-    )
+    integrated = pd.read_csv(INPUT / "nq1_continuous_badj_nonbadj.csv", parse_dates=["date"])
+    tqqq = pd.read_csv(INPUT / "raw_TQQQ.csv", parse_dates=["date"])
+    bil = pd.read_csv(INPUT / "raw_BIL.csv", parse_dates=["date"])
     return integrated, tqqq, bil
 
 
@@ -296,6 +279,13 @@ def build_report(nav: pd.DataFrame, ret: pd.DataFrame, summary: pd.DataFrame, ye
 
 def main():
     integrated, tqqq, bil = load_inputs()
+    integrated = integrated.sort_values("date").copy()
+    integrated["unadj_prev_close"] = integrated["unadj_close"].shift(1)
+    integrated["badj_close_delta"] = integrated["badj_close"].diff()
+    integrated["continuous_return"] = integrated["badj_close_delta"] / integrated["unadj_prev_close"]
+    integrated["unadj_raw_return"] = integrated["unadj_close"].pct_change()
+    integrated["estimated_roll_effect_return"] = integrated["unadj_raw_return"] - integrated["continuous_return"]
+
     tqqq = tqqq[["date", "adjclose"]].rename(columns={"adjclose": "TQQQ"})
     bil = bil[["date", "adjclose"]].rename(columns={"adjclose": "BIL"})
     nq = integrated[["date", "continuous_return", "unadj_close", "badj_close_delta", "estimated_roll_effect_return"]]
@@ -324,15 +314,11 @@ def main():
     audit_base = df.set_index("date")[["continuous_return", "estimated_roll_effect_return", "badj_close_delta", "unadj_close", "TQQQ", "BIL"]]
     audit_base = audit_base.rename(columns={"TQQQ": "TQQQ_adjclose", "BIL": "BIL_adjclose"})
     audit = audit_base.join(ret)
-    audit.to_csv(FINAL / "tqqq_mnq_badj_daily_model.csv")
-    nav.to_csv(FINAL / "tqqq_mnq_badj_nav_paths.csv")
-    ret.to_csv(FINAL / "tqqq_mnq_badj_daily_returns.csv")
-    summary.to_csv(FINAL / "tqqq_mnq_badj_summary.csv")
-    yearly.to_csv(FINAL / "tqqq_mnq_badj_yearly_returns.csv")
-
-    shutil.copy2(first_existing(DATA / "nq1_integrated_badj_nonbadj_closed_only.csv", FINAL / "nq1_integrated_badj_nonbadj_closed_only.csv"), FINAL / "nq1_integrated_badj_nonbadj_closed_only.csv")
-    shutil.copy2(first_existing(DATA / "raw_TQQQ.csv", DATA / "raw" / "raw_TQQQ.csv", FINAL / "raw_TQQQ.csv"), FINAL / "raw_TQQQ.csv")
-    shutil.copy2(first_existing(DATA / "raw_BIL.csv", DATA / "raw" / "raw_BIL.csv", FINAL / "raw_BIL.csv"), FINAL / "raw_BIL.csv")
+    audit.to_csv(INTERIM / "tqqq_mnq_badj_daily_model.csv")
+    nav.to_csv(OUTPUT / "tqqq_mnq_badj_nav_paths.csv")
+    ret.to_csv(OUTPUT / "tqqq_mnq_badj_daily_returns.csv")
+    summary.to_csv(OUTPUT / "tqqq_mnq_badj_summary.csv")
+    yearly.to_csv(OUTPUT / "tqqq_mnq_badj_yearly_returns.csv")
 
     plot_growth(nav)
     plot_ratio(nav)
@@ -346,15 +332,16 @@ def main():
         "cash_weights": CASH_WEIGHTS,
         "outputs": {
             "report": str(ROOT / "report_badj_final.html"),
-            "summary": str(FINAL / "tqqq_mnq_badj_summary.csv"),
-            "nav": str(FINAL / "tqqq_mnq_badj_nav_paths.csv"),
+            "summary": str(OUTPUT / "tqqq_mnq_badj_summary.csv"),
+            "nav": str(OUTPUT / "tqqq_mnq_badj_nav_paths.csv"),
         },
     }
-    (FINAL / "tqqq_mnq_badj_source_notes.json").write_text(json.dumps(notes, indent=2), encoding="utf-8")
+    (OUTPUT / "tqqq_mnq_badj_source_notes.json").write_text(json.dumps(notes, indent=2), encoding="utf-8")
 
     print(summary[["final_multiple", "cagr", "ann_vol", "max_drawdown", "excess_sharpe_vs_bil"]].to_string())
     print("Report:", ROOT / "report_badj_final.html")
-    print("Final data dir:", FINAL)
+    print("Interim data dir:", INTERIM)
+    print("Output data dir:", OUTPUT)
 
 
 if __name__ == "__main__":

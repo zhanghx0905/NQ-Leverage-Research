@@ -1,0 +1,27 @@
+{
+  "created_from": "C:/Users/zhx09/Desktop/tqqq_mnq_analysis/data/final/nq1_integrated_badj_nonbadj_closed_only.csv",
+  "clean_file": "C:/Users/zhx09/Desktop/tqqq_mnq_analysis/data/input/nq1_continuous_badj_nonbadj.csv",
+  "rows": 4791,
+  "start": "2007-06-20",
+  "end": "2026-06-18",
+  "removed_columns": [
+    "source",
+    "conflict",
+    "unadj_prev_close",
+    "badj_prev_close",
+    "badj_close_delta",
+    "badj_open_gap_delta",
+    "continuous_return",
+    "continuous_gap_return",
+    "unadj_raw_return",
+    "estimated_roll_effect_return",
+    "mnq_point_pnl_per_contract",
+    "nq_point_pnl_per_contract"
+  ],
+  "source_counts": {
+    "both_identical": 2751,
+    "long_file_only": 2040
+  },
+  "conflict_count": 0,
+  "method": "Input file keeps only B-ADJ and non-B-ADJ OHLC. Scripts recompute previous closes, B-ADJ deltas, returns, and PnL-derived fields."
+}
