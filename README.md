@@ -1,10 +1,10 @@
 # TQQQ vs MNQ 3x 研究结论
 
-本仓库整理的是 TQQQ 与用 MNQ/NQ 主连模拟 3 倍纳指敞口的回测研究。当前版本只保留修正后的 B-ADJ 口径，不再保留早期基于 `NQ=F pct_change()`、Investing 主连百分比收益或未处理换月跳空的错误模拟记录。
+本仓库整理的是 TQQQ 与用 MNQ/NQ 主连模拟 3 倍纳指敞口的回测研究。
 
 ## 最重要结论
 
-1. **修正换月口径后，MNQ 每日 3x 本身并没有显著碾压 TQQQ。**  
+1. **MNQ 每日 3x 本身并没有显著碾压 TQQQ。**  
    2011-01-03 到 2026-06-18，TQQQ 最终约 `216.10x`，MNQ 每日 3x 不吃现金收益约 `210.01x`。两者非常接近。
 
 2. **MNQ 方案的主要优势来自“多余现金买短债”，不是期货路径本身。**  
@@ -18,9 +18,6 @@
 
 5. **实操上，周平衡是更现实的折中。**  
    日平衡最接近 TQQQ 的每日 3x 产品定义，但操作频率太高；月平衡历史收益高但杠杆漂移过大。对真实账户，更合理的是每周检查，并加一条杠杆带宽规则，例如调仓前杠杆超过 `3.5x` 或 `4.0x` 就提前降回目标。
-
-6. **140k 账户可以研究 MNQ 替代 TQQQ，但不适合假装可以精确每日 3x。**  
-   按样本末 2026-06-18 的 NQ close `30719.75`，1 手 MNQ 名义约 `61.44k`，140k 账户做 3x 目标约需 `6.84` 手。整数手交易意味着每 1 手就是约 `0.44x` 账户杠杆，调仓粒度仍然很粗。
 
 ## 核心结果：TQQQ vs MNQ 每日 3x
 
@@ -71,25 +68,6 @@
 - 非 B-ADJ 数据仍然需要保留，因为真实合约名义本金和杠杆必须用实际价格计算。
 - 本仓库当前采用的正确口径是：`B-ADJ close delta / previous non-B-ADJ close`。
 
-## 当前文件
-
-- `final_tqqq_mnq_badj_analysis.py`：TQQQ vs MNQ 每日 3x 主分析脚本。
-- `final_rebalance_badj_analysis.py`：日、周、月再平衡比较脚本。
-- `report_badj_final.html`：TQQQ vs MNQ 每日 3x HTML 报告。
-- `report_rebalance_badj_final.html`：日、周、月再平衡 HTML 报告。
-- `charts_final/`：最终图表。
-- `data/final/`：最终数据、回测路径、汇总 CSV 和 source notes。
-- `AGENTS.md`：研究方法、复现规则和后续扩展规范。
-
-## 复现
-
-```powershell
-cd C:\Users\zhx09\Desktop\tqqq_mnq_analysis
-python final_tqqq_mnq_badj_analysis.py
-python final_rebalance_badj_analysis.py
-```
-
-依赖：`pandas`、`numpy`、`matplotlib`。
 
 ## 限制
 
